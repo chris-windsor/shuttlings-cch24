@@ -8,6 +8,7 @@ pub enum AppError {
     CargoManifestError(cargo_manifest::Error),
     YAMLManifestError(serde_yaml::Error),
     JSONManifestError(serde_json::Error),
+    ManifestError,
     NoMagicKeyword,
     NoContent,
     TomlParseError(toml::de::Error),
@@ -31,6 +32,7 @@ impl IntoResponse for AppError {
                 println!("{}", rejection);
                 (StatusCode::BAD_REQUEST, INVALID_MANIFEST_DETAIL)
             }
+            AppError::ManifestError => (StatusCode::BAD_REQUEST, INVALID_MANIFEST_DETAIL),
             AppError::NoMagicKeyword => (StatusCode::BAD_REQUEST, "Magic keyword not provided"),
             AppError::NoContent => (StatusCode::NO_CONTENT, ""),
             AppError::TomlParseError(rejection) => {

@@ -1,29 +1,27 @@
+use std::str::FromStr;
+
 use axum::http::{header::CONTENT_TYPE, HeaderMap};
 use cargo_manifest::Manifest;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use toml::Table;
 
 use crate::util::AppError;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct Config {
     package: Package,
 }
 
-const MAGIC_KEYWORD: &str = "Christmas 2024";
-impl Config {
-    fn has_magic_keyword(&self) -> bool {
-        self.package.keywords.contains(&String::from(MAGIC_KEYWORD))
-    }
-}
-
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct Package {
+    name: String,
     metadata: Metadata,
-    keywords: Vec<String>,
+    keywords: Option<Vec<String>>,
+    #[serde(rename = "rust-version")]
+    rust_version: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct Metadata {
     orders: Vec<Table>,
 }
@@ -33,41 +31,54 @@ pub async fn car_go_festivity(headers: HeaderMap, body: String) -> Result<String
     let content_header = headers.get(CONTENT_TYPE);
     let content_type = content_header.unwrap().to_str().unwrap();
 
-    dbg!(content_type);
-
+    let content: String;
     let config: Config;
+    let manifest: Manifest;
 
     match content_type {
         "application/toml" => {
-            let manifest = Manifest::from_slice(&body.as_bytes())?;
-
-            if let Some(keywords) = manifest.package.unwrap().keywords {
-                let keywords = keywords.as_local().unwrap();
-                if !keywords.contains(&String::from(MAGIC_KEYWORD)) {
-                    return Err(AppError::NoMagicKeyword);
-                }
-            } else {
-                return Err(AppError::NoMagicKeyword);
-            }
-
-            config = toml::from_str::<Config>(&body)?;
+            manifest = Manifest::from_slice(&body.as_bytes())?;
+            content = String::from(body.as_str());
         }
         "application/yaml" => {
             config = serde_yaml::from_slice(&body.as_bytes())?;
-
-            if !config.has_magic_keyword() {
-                return Err(AppError::NoMagicKeyword);
-            }
+            let re_toml = toml::to_string(&config).unwrap();
+            content = re_toml.clone();
+            manifest = Manifest::from_str(&re_toml)?;
         }
         "application/json" => {
             config = serde_json::from_slice(&body.as_bytes())?;
-
-            if !config.has_magic_keyword() {
-                return Err(AppError::NoMagicKeyword);
-            }
+            let re_toml = toml::to_string(&config).unwrap();
+            content = re_toml.clone();
+            manifest = Manifest::from_str(&re_toml)?;
         }
         _ => return Err(AppError::UnsupportedMediaType),
     }
+
+    let package = manifest.package.unwrap();
+
+    if let Some(version) = package.rust_version {
+        if version
+            .as_local()
+            .unwrap()
+            .chars()
+            .into_iter()
+            .any(|char| char.is_alphabetic())
+        {
+            return Err(AppError::ManifestError);
+        }
+    }
+
+    if let Some(keywords) = package.keywords {
+        let keywords = keywords.as_local().unwrap();
+        if !keywords.contains(&String::from("Christmas 2024")) {
+            return Err(AppError::NoMagicKeyword);
+        }
+    } else {
+        return Err(AppError::NoMagicKeyword);
+    }
+
+    let config = toml::from_str::<Config>(&content)?;
 
     let order_items = config
         .package
