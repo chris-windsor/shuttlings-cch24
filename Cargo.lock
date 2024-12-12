@@ -862,6 +862,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
+name = "leaky-bucket-lite"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1411c737dd21a748044ab29af14b7f920b2dcc277284df6dd986492c98bf5229"
+dependencies = [
+ "tokio",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.167"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1687,6 +1696,7 @@ dependencies = [
  "anyhow",
  "axum 0.7.9",
  "cargo-manifest",
+ "leaky-bucket-lite",
  "serde",
  "serde_json",
  "serde_yaml",
