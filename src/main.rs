@@ -9,7 +9,7 @@ use challenge_dec2::{
     egregious_encryption_key_v6,
 };
 use challenge_dec5::car_go_festivity;
-use challenge_dec9::milk_bucket_leaky;
+use challenge_dec9::{milk_bucket_leaky, milk_bucket_refill};
 use challenge_intro::{hello_bird, seek_and_find};
 use leaky_bucket_lite::LeakyBucket;
 
@@ -42,6 +42,7 @@ async fn main() -> shuttle_axum::ShuttleAxum {
         .route("/2/v6/key", get(egregious_encryption_key_v6))
         .route("/5/manifest", post(car_go_festivity))
         .route("/9/milk", post(milk_bucket_leaky))
+        .route("/9/refill", post(milk_bucket_refill))
         .with_state(app_state);
 
     Ok(router.into())

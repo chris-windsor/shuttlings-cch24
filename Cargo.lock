@@ -864,8 +864,7 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 [[package]]
 name = "leaky-bucket-lite"
 version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1411c737dd21a748044ab29af14b7f920b2dcc277284df6dd986492c98bf5229"
+source = "git+https://github.com/chris-windsor/leaky-bucket-lite.git#26e061f9336fb88100d810b620a4b27816ff1431"
 dependencies = [
  "tokio",
 ]

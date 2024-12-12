@@ -42,7 +42,7 @@ pub async fn milk_bucket_leaky(
     headers: HeaderMap,
     body: Bytes,
 ) -> Result<impl IntoResponse, Day9AppError> {
-    if state.leaky_milk_bucket.tokens() == 0 {
+    if state.leaky_milk_bucket.tokens().await == 0 {
         return Ok((
             StatusCode::TOO_MANY_REQUESTS,
             String::from("No milk available\n"),
@@ -61,6 +61,12 @@ pub async fn milk_bucket_leaky(
     }
 
     Ok((StatusCode::OK, String::from("Milk withdrawn\n")))
+}
+
+pub async fn milk_bucket_refill(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    state.leaky_milk_bucket.refill().await;
+
+    StatusCode::OK
 }
 
 pub enum Day9AppError {
