@@ -12,7 +12,6 @@ use challenge_intro::{hello_bird, seek_and_find};
 mod challenge_dec2;
 mod challenge_dec5;
 mod challenge_intro;
-mod util;
 
 #[shuttle_runtime::main]
 async fn main() -> shuttle_axum::ShuttleAxum {
