@@ -5,6 +5,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use rand::{Rng, SeedableRng};
 
 use crate::AppState;
 
@@ -32,6 +33,7 @@ impl Display for BoardTile {
 pub struct MilkCookieGame {
     board_state: Vec<Vec<BoardTile>>,
     size: usize,
+    rng: rand::rngs::StdRng,
 }
 
 impl MilkCookieGame {
@@ -39,11 +41,13 @@ impl MilkCookieGame {
         MilkCookieGame {
             board_state: vec![Vec::with_capacity(size); size],
             size,
+            rng: rand::rngs::StdRng::seed_from_u64(2024),
         }
     }
 
     fn reset(&mut self) {
-        self.board_state = vec![Vec::with_capacity(self.size); self.size]
+        self.board_state = vec![Vec::with_capacity(self.size); self.size];
+        self.rng = rand::rngs::StdRng::seed_from_u64(2024);
     }
 
     fn place(&mut self, tile: BoardTile, column: usize) {
@@ -173,6 +177,26 @@ impl MilkCookieGame {
 
         board
     }
+
+    fn make_seeded_random(&mut self) {
+        self.board_state = vec![vec![BoardTile::Blank; self.size]; self.size];
+        for row in (0..self.size).rev() {
+            for column in 0..self.size {
+                let new_cell = if self.rng.gen::<bool>() {
+                    BoardTile::Cookie
+                } else {
+                    BoardTile::Milk
+                };
+                let cell = self
+                    .board_state
+                    .get_mut(column)
+                    .unwrap()
+                    .get_mut(row)
+                    .unwrap();
+                *cell = new_cell;
+            }
+        }
+    }
 }
 
 pub async fn milk_cookie_game_state(State(state): State<Arc<AppState>>) -> impl IntoResponse {
@@ -215,6 +239,16 @@ pub async fn milk_cookie_game_place(
         StatusCode::OK,
         state.milk_cookie_game.try_read().unwrap().to_string(),
     ))
+}
+
+pub async fn milk_cookie_not_random(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    state
+        .milk_cookie_game
+        .try_write()
+        .unwrap()
+        .make_seeded_random();
+
+    state.milk_cookie_game.try_read().unwrap().to_string()
 }
 
 pub enum Day12AppError {

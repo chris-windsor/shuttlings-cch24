@@ -1696,6 +1696,7 @@ dependencies = [
  "axum 0.7.9",
  "cargo-manifest",
  "leaky-bucket-lite",
+ "rand",
  "serde",
  "serde_json",
  "serde_yaml",

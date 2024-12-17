@@ -8,7 +8,8 @@ use axum::{
     Router,
 };
 use challenge_dec12::{
-    milk_cookie_game_place, milk_cookie_game_reset, milk_cookie_game_state, MilkCookieGame,
+    milk_cookie_game_place, milk_cookie_game_reset, milk_cookie_game_state, milk_cookie_not_random,
+    MilkCookieGame,
 };
 use challenge_dec2::{
     egregious_encryption_dest, egregious_encryption_dest_v6, egregious_encryption_key,
@@ -59,6 +60,7 @@ async fn main() -> shuttle_axum::ShuttleAxum {
         .route("/12/board", get(milk_cookie_game_state))
         .route("/12/reset", post(milk_cookie_game_reset))
         .route("/12/place/:team/:column", post(milk_cookie_game_place))
+        .route("/12/random-board", get(milk_cookie_not_random))
         .with_state(app_state);
 
     Ok(router.into())
