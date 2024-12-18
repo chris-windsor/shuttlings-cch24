@@ -11,6 +11,7 @@ use challenge_dec12::{
     milk_cookie_game_place, milk_cookie_game_reset, milk_cookie_game_state, milk_cookie_not_random,
     MilkCookieGame,
 };
+use challenge_dec16::{unwrap_present, wrap_present};
 use challenge_dec2::{
     egregious_encryption_dest, egregious_encryption_dest_v6, egregious_encryption_key,
     egregious_encryption_key_v6,
@@ -21,6 +22,7 @@ use challenge_intro::{hello_bird, seek_and_find};
 use leaky_bucket_lite::LeakyBucket;
 
 mod challenge_dec12;
+mod challenge_dec16;
 mod challenge_dec2;
 mod challenge_dec5;
 mod challenge_dec9;
@@ -61,6 +63,8 @@ async fn main() -> shuttle_axum::ShuttleAxum {
         .route("/12/reset", post(milk_cookie_game_reset))
         .route("/12/place/:team/:column", post(milk_cookie_game_place))
         .route("/12/random-board", get(milk_cookie_not_random))
+        .route("/16/wrap", post(wrap_present))
+        .route("/16/unwrap", get(unwrap_present))
         .with_state(app_state);
 
     Ok(router.into())

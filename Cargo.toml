@@ -6,7 +6,9 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.94"
 axum = { version = "0.7.9", features = ["macros"] }
+biscotti = "0.3.4"
 cargo-manifest = "0.17.0"
+jsonwebtoken = "9.3.0"
 leaky-bucket-lite = { git = "https://github.com/chris-windsor/leaky-bucket-lite.git" }
 rand = "0.8.5"
 serde = { version = "1.0.215", features = ["derive"] }
