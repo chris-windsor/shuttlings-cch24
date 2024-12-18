@@ -11,7 +11,7 @@ use challenge_dec12::{
     milk_cookie_game_place, milk_cookie_game_reset, milk_cookie_game_state, milk_cookie_not_random,
     MilkCookieGame,
 };
-use challenge_dec16::{unwrap_present, wrap_present};
+use challenge_dec16::{unwrap_encrypted_present, unwrap_present, wrap_present};
 use challenge_dec2::{
     egregious_encryption_dest, egregious_encryption_dest_v6, egregious_encryption_key,
     egregious_encryption_key_v6,
@@ -65,6 +65,7 @@ async fn main() -> shuttle_axum::ShuttleAxum {
         .route("/12/random-board", get(milk_cookie_not_random))
         .route("/16/wrap", post(wrap_present))
         .route("/16/unwrap", get(unwrap_present))
+        .route("/16/decode", post(unwrap_encrypted_present))
         .with_state(app_state);
 
     Ok(router.into())

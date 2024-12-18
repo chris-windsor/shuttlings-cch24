@@ -1,10 +1,10 @@
 use axum::{
     http::{header, HeaderMap, StatusCode},
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     Json,
 };
 use biscotti::{Processor, ProcessorConfig, RequestCookies};
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
@@ -64,4 +64,45 @@ pub async fn unwrap_present(headers: HeaderMap) -> impl IntoResponse {
     let gift = serde_json::from_str::<Value>(&token.claims.present).unwrap();
 
     (StatusCode::OK, Json(gift))
+}
+
+pub async fn unwrap_encrypted_present(body: String) -> Result<impl IntoResponse, Day16AppError> {
+    let mut custom_validation = Validation::default();
+    custom_validation.required_spec_claims = [].into();
+    custom_validation.algorithms = vec![Algorithm::RS256, Algorithm::RS512];
+
+    let decode_result = decode::<Value>(
+        &body,
+        &DecodingKey::from_rsa_pem(include_bytes!("santa_public_key.pem")).unwrap(),
+        &custom_validation,
+    )?;
+
+    Ok(Json(decode_result.claims))
+}
+
+pub enum Day16AppError {
+    JWTError(jsonwebtoken::errors::Error),
+}
+
+impl IntoResponse for Day16AppError {
+    fn into_response(self) -> Response {
+        match self {
+            Day16AppError::JWTError(rejection) => {
+                println!("{}", rejection);
+                match rejection.kind() {
+                    jsonwebtoken::errors::ErrorKind::InvalidSignature => {
+                        (StatusCode::UNAUTHORIZED, "")
+                    }
+                    _ => (StatusCode::BAD_REQUEST, ""),
+                }
+            }
+        }
+        .into_response()
+    }
+}
+
+impl From<jsonwebtoken::errors::Error> for Day16AppError {
+    fn from(rejection: jsonwebtoken::errors::Error) -> Self {
+        Self::JWTError(rejection)
+    }
 }
