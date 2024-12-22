@@ -40,14 +40,20 @@ struct Quote {
     version: i32,
 }
 
+async fn retrieve_quote_by_id(id: &Uuid, pool: &sqlx::PgPool) -> Result<Quote, Day19AppError> {
+    let quote = sqlx::query_as::<_, Quote>("SELECT * FROM quotes WHERE id = $1")
+        .bind(id)
+        .fetch_one(pool)
+        .await?;
+
+    Ok(quote)
+}
+
 pub async fn quote_by_id(
     state: State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, Day19AppError> {
-    let quote = sqlx::query_as::<_, Quote>("SELECT * FROM quotes WHERE id = $1")
-        .bind(id)
-        .fetch_one(&state.pool)
-        .await?;
+    let quote = retrieve_quote_by_id(&id, &state.pool).await?;
     Ok((StatusCode::OK, Json(quote)))
 }
 
@@ -55,10 +61,7 @@ pub async fn remove_quote_by_id(
     state: State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, Day19AppError> {
-    let quote = sqlx::query_as::<_, Quote>("SELECT * FROM quotes WHERE id = $1")
-        .bind(id)
-        .fetch_one(&state.pool)
-        .await?;
+    let quote = retrieve_quote_by_id(&id, &state.pool).await?;
 
     sqlx::query("DELETE FROM quotes WHERE id = $1")
         .bind(id)
@@ -82,10 +85,7 @@ pub async fn undo_quote_by_id(
     .execute(&state.pool)
     .await?;
 
-    let quote = sqlx::query_as::<_, Quote>("SELECT * FROM quotes WHERE id = $1")
-        .bind(&id)
-        .fetch_one(&state.pool)
-        .await?;
+    let quote = retrieve_quote_by_id(&id, &state.pool).await?;
 
     Ok((StatusCode::OK, Json(quote)))
 }
@@ -105,10 +105,7 @@ pub async fn draft_quote(
         .execute(&state.pool)
         .await?;
 
-    let quote = sqlx::query_as::<_, Quote>("SELECT * FROM quotes WHERE id = $1")
-        .bind(&id)
-        .fetch_one(&state.pool)
-        .await?;
+    let quote = retrieve_quote_by_id(&id, &state.pool).await?;
 
     Ok((StatusCode::CREATED, Json(quote)))
 }
