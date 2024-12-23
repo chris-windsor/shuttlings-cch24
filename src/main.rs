@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     sync::{Arc, RwLock},
     time::Duration,
 };
@@ -13,7 +14,7 @@ use challenge_dec12::{
 };
 use challenge_dec16::{unwrap_encrypted_present, unwrap_present, wrap_present};
 use challenge_dec19::{
-    draft_quote, quote_by_id, quotes_reset, remove_quote_by_id, undo_quote_by_id,
+    draft_quote, paginated_quotes, quote_by_id, quotes_reset, remove_quote_by_id, undo_quote_by_id,
 };
 use challenge_dec2::{
     egregious_encryption_dest, egregious_encryption_dest_v6, egregious_encryption_key,
@@ -37,6 +38,7 @@ struct AppState {
     leaky_milk_bucket: LeakyBucket,
     milk_cookie_game: RwLock<MilkCookieGame>,
     pool: sqlx::PgPool,
+    quote_pagination: RwLock<HashMap<String, i32>>,
 }
 
 #[shuttle_runtime::main]
@@ -55,10 +57,13 @@ async fn main(#[shuttle_shared_db::Postgres] pool: sqlx::PgPool) -> shuttle_axum
 
     let milk_cookie_game = RwLock::new(MilkCookieGame::new(4));
 
+    let quote_pagination = RwLock::new(HashMap::new());
+
     let app_state = Arc::new(AppState {
         leaky_milk_bucket,
         milk_cookie_game,
         pool,
+        quote_pagination,
     });
 
     let router = Router::new()
@@ -83,6 +88,7 @@ async fn main(#[shuttle_shared_db::Postgres] pool: sqlx::PgPool) -> shuttle_axum
         .route("/19/remove/:id", delete(remove_quote_by_id))
         .route("/19/undo/:id", put(undo_quote_by_id))
         .route("/19/draft", post(draft_quote))
+        .route("/19/list", get(paginated_quotes))
         .with_state(app_state);
 
     Ok(router.into())
