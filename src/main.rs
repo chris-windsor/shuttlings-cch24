@@ -20,16 +20,19 @@ use challenge_dec2::{
     egregious_encryption_dest, egregious_encryption_dest_v6, egregious_encryption_key,
     egregious_encryption_key_v6,
 };
+use challenge_dec23::{htmx_css_animations, htmx_present_color, htmx_star};
 use challenge_dec5::car_go_festivity;
 use challenge_dec9::{milk_bucket_leaky, milk_bucket_refill};
 use challenge_intro::{hello_bird, seek_and_find};
 use leaky_bucket_lite::LeakyBucket;
 use shuttle_runtime::CustomError;
+use tower_http::services::ServeDir;
 
 mod challenge_dec12;
 mod challenge_dec16;
 mod challenge_dec19;
 mod challenge_dec2;
+mod challenge_dec23;
 mod challenge_dec5;
 mod challenge_dec9;
 mod challenge_intro;
@@ -89,6 +92,10 @@ async fn main(#[shuttle_shared_db::Postgres] pool: sqlx::PgPool) -> shuttle_axum
         .route("/19/undo/:id", put(undo_quote_by_id))
         .route("/19/draft", post(draft_quote))
         .route("/19/list", get(paginated_quotes))
+        .route("/23/star", get(htmx_star))
+        .route("/23/present/:color", get(htmx_present_color))
+        .route("/23/ornament/:state/:n", get(htmx_css_animations))
+        .nest_service("/assets", ServeDir::new("assets"))
         .with_state(app_state);
 
     Ok(router.into())
