@@ -20,7 +20,7 @@ use challenge_dec2::{
     egregious_encryption_dest, egregious_encryption_dest_v6, egregious_encryption_key,
     egregious_encryption_key_v6,
 };
-use challenge_dec23::{htmx_css_animations, htmx_present_color, htmx_star};
+use challenge_dec23::{htmx_css_animations, htmx_form, htmx_present_color, htmx_star};
 use challenge_dec5::car_go_festivity;
 use challenge_dec9::{milk_bucket_leaky, milk_bucket_refill};
 use challenge_intro::{hello_bird, seek_and_find};
@@ -95,6 +95,7 @@ async fn main(#[shuttle_shared_db::Postgres] pool: sqlx::PgPool) -> shuttle_axum
         .route("/23/star", get(htmx_star))
         .route("/23/present/:color", get(htmx_present_color))
         .route("/23/ornament/:state/:n", get(htmx_css_animations))
+        .route("/23/lockfile", post(htmx_form))
         .nest_service("/assets", ServeDir::new("assets"))
         .with_state(app_state);
 

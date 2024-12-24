@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.94"
-axum = { version = "0.7.9", features = ["macros"] }
+axum = { version = "0.7.9", features = ["macros", "multipart"] }
 biscotti = "0.3.4"
 cargo-manifest = "0.17.0"
 fhtml = "0.6.1"

@@ -1,8 +1,10 @@
 use axum::{
-    extract::Path,
+    body::Bytes,
+    extract::{Multipart, Path},
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use serde::Deserialize;
 
 pub async fn htmx_star() -> impl IntoResponse {
     fhtml::format! {
@@ -50,9 +52,71 @@ pub async fn htmx_css_animations(
     })
 }
 
+#[derive(Deserialize)]
+struct CargoLock {
+    package: Vec<Package>,
+}
+
+#[derive(Deserialize)]
+struct Package {
+    checksum: Option<String>,
+}
+
+pub async fn htmx_form(mut multipart: Multipart) -> Result<impl IntoResponse, Day23AppError> {
+    let mut data = Bytes::new();
+    while let Some(field) = multipart
+        .next_field()
+        .await
+        .map_err(|_| Day23AppError::BadFile)?
+    {
+        let name = field.name().unwrap();
+        if name == "lockfile" {
+            data = field.bytes().await.map_err(|_| Day23AppError::BadFile)?;
+        }
+    }
+
+    if data.is_empty() {
+        return Err(Day23AppError::BadFile);
+    }
+
+    let file_contents = String::from_utf8(data.to_vec()).map_err(|_| Day23AppError::BadFile)?;
+
+    let cargo_lock: CargoLock =
+        toml::from_str(&file_contents).map_err(|_| Day23AppError::BadFile)?;
+
+    let divs: Result<Vec<String>, Day23AppError> = cargo_lock
+        .package
+        .iter()
+        .filter(|package| package.checksum.is_some())
+        .map(|package| -> Result<String, Day23AppError> {
+            let checksum = package.checksum.as_ref().unwrap();
+            if checksum.len() < 10 {
+                return Err(Day23AppError::BadChecksum);
+            }
+            let color_hex = i64::from_str_radix(&checksum[0..6], 16).map_err(|_| Day23AppError::BadChecksum)?;
+            let color_hex = format!("{:06x}", color_hex);
+            let top =
+                i64::from_str_radix(&checksum[6..8], 16).map_err(|_| Day23AppError::BadChecksum)?;
+            let left = i64::from_str_radix(&checksum[8..10], 16)
+                .map_err(|_| Day23AppError::BadChecksum)?;
+
+            let div: String = fhtml::format! {
+                <div style={format_args!("background-color:#{};top:{}px;left:{}px;", color_hex, top, left)}></div>
+            }.to_string();
+
+            Ok(div)
+        })
+        .collect();
+
+    let divs = divs.map_err(|e| e)?.join("");
+    Ok(divs)
+}
+
 pub enum Day23AppError {
     BadColor,
     BadState,
+    BadFile,
+    BadChecksum,
 }
 
 impl IntoResponse for Day23AppError {
@@ -60,6 +124,8 @@ impl IntoResponse for Day23AppError {
         match self {
             Day23AppError::BadColor => (StatusCode::IM_A_TEAPOT, ""),
             Day23AppError::BadState => (StatusCode::IM_A_TEAPOT, ""),
+            Day23AppError::BadFile => (StatusCode::BAD_REQUEST, ""),
+            Day23AppError::BadChecksum => (StatusCode::UNPROCESSABLE_ENTITY, ""),
         }
         .into_response()
     }
